@@ -36,8 +36,10 @@ public class RtpPacketsCapture {
         handle = device.openLive(snapshotLength, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, readTimeout);
         PcapDumper dumper = handle.dumpOpen("out.pcap");
 
-        String filter = "udp";
+        String filter = "udp and (port 10000 or port 20000)";
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
+
+        AtomicInteger packetCount = new AtomicInteger(0);
 
         // Create a listener that defines what to do with the received packets
         PacketListener listener = new PacketListener() {
@@ -52,28 +54,22 @@ public class RtpPacketsCapture {
                 System.out.println("packet length : " + packet.length());
                 System.out.println("packet raw data : " + packet.getRawData());
 
-                if (packet.contains(UdpPacket.class)) {
-                    System.out.println("packet contains UdpPacket.class");
-                    UdpPacket udpPacket = packet.get(UdpPacket.class);
-                    byte[] udpPayload = udpPacket.getPayload().getRawData();
+                //extract audio from rtp and store that audio in a file
+                byte[] data = packet.getRawData();
+                byte[] audio = Arrays.copyOfRange(data, 12, data.length);
+                System.out.println("audio : " + audio);
 
-                    // Check if the payload represents an RTP packet
-                    if (udpPayload.length >= 12) {
-                        System.out.println("udpPayload.length >= 12");
-                        // Parse the RTP header
-                        int payloadType = udpPayload[1] & 0x7F;  // Extract payload type
-
-                        // Extract audio data (skip RTP header)
-                        byte[] audioData = Arrays.copyOfRange(udpPayload, 12, udpPayload.length);
-
-                        // Depending on the payloadType, choose the appropriate decoder
-//                        if (payloadType == YOUR_AUDIO_CODEC_TYPE) {
-                            // Decode the audio data using the corresponding decoder
-                            // Example: decode and play audio using a decoder library
-                            // AudioDecoder.decodeAndPlay(audioData);
-//                        }
-                    }
+                //store audio in a file
+                try {
+                    AudioFormat format = new AudioFormat(8000.0f, 16, 1, true, true);
+                    ByteArrayInputStream bais = new ByteArrayInputStream(audio);
+                    AudioInputStream audioInputStream = new AudioInputStream(bais, format, audio.length);
+                    File file = new File(packetCount + " " + "out.wav");
+                    AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, file);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+
                 System.out.println("********************************************");
 
                 // Dump packets to file
@@ -82,6 +78,7 @@ public class RtpPacketsCapture {
                 } catch (NotOpenException e) {
                     e.printStackTrace();
                 }
+                packetCount.incrementAndGet();
             }
         };
 
