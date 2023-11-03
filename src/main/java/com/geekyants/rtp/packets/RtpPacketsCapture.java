@@ -36,7 +36,7 @@ public class RtpPacketsCapture {
         handle = device.openLive(snapshotLength, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, readTimeout);
         PcapDumper dumper = handle.dumpOpen("out.pcap");
 
-        String filter = "udp and (port 10000 or port 20000)";
+        String filter = "udp";
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
 
         AtomicInteger packetCount = new AtomicInteger(0);
@@ -53,23 +53,6 @@ public class RtpPacketsCapture {
                 System.out.println("packet payload : " + packet.getPayload());
                 System.out.println("packet length : " + packet.length());
                 System.out.println("packet raw data : " + packet.getRawData());
-
-                //extract audio from rtp and store that audio in a file
-                byte[] data = packet.getRawData();
-                byte[] audio = Arrays.copyOfRange(data, 12, data.length);
-                System.out.println("audio : " + audio);
-
-                //store audio in a file
-                try {
-                    AudioFormat format = new AudioFormat(8000.0f, 16, 1, true, true);
-                    ByteArrayInputStream bais = new ByteArrayInputStream(audio);
-                    AudioInputStream audioInputStream = new AudioInputStream(bais, format, audio.length);
-                    File file = new File(packetCount + " " + "out.wav");
-                    AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, file);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
                 System.out.println("********************************************");
 
                 // Dump packets to file
