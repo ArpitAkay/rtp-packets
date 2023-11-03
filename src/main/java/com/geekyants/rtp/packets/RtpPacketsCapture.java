@@ -1,19 +1,14 @@
 package com.geekyants.rtp.packets;
 
 import org.pcap4j.core.*;
-import org.pcap4j.packet.IpV4Packet;
 import org.pcap4j.packet.Packet;
 import org.pcap4j.packet.UdpPacket;
-import org.pcap4j.packet.namednumber.IpNumber;
 import org.pcap4j.util.NifSelector;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import javax.sound.sampled.*;
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Arrays;
 
 @Component
 public class RtpPacketsCapture {
@@ -58,6 +53,35 @@ public class RtpPacketsCapture {
                     dumper.dump(packet, handle.getTimestamp());
                 } catch (NotOpenException e) {
                     e.printStackTrace();
+                }
+
+                if (packet.contains(UdpPacket.class)) {
+                    System.out.println("UDP packet");
+                    UdpPacket udpPacket = packet.get(UdpPacket.class);
+                    byte[] udpPayload = udpPacket.getPayload().getRawData();
+
+                    // Check if the payload represents an RTP packet (you may need to validate this)
+                    if (udpPayload.length >= 12) {
+                        System.out.println("RTP packet");
+                        // Parse the RTP header
+                        int payloadType = udpPayload[1] & 0x7F;  // Extract payload type
+                        int sequenceNumber = ((udpPayload[2] & 0xFF) << 8) | (udpPayload[3] & 0xFF);
+                        long timestamp =
+                                ((udpPayload[4] & 0xFF) << 24) |
+                                        ((udpPayload[5] & 0xFF) << 16) |
+                                        ((udpPayload[6] & 0xFF) << 8) |
+                                        (udpPayload[7] & 0xFF);
+
+                        // Extract audio data (skip RTP header)
+                        byte[] audioData = Arrays.copyOfRange(udpPayload, 12, udpPayload.length);
+                        System.out.println(audioData);
+                        // Depending on the payloadType, choose the appropriate decoder
+//                        if (payloadType == YOUR_AUDIO_CODEC_TYPE) {
+                            // Decode the audio data using the corresponding decoder
+                            // Example: decode and play audio using a decoder library
+                            // AudioDecoder.decodeAndPlay(audioData);
+//                        }
+                    }
                 }
             }
         };
