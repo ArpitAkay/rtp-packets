@@ -38,12 +38,12 @@ public class RtpPacketsCapture {
             public void gotPacket(Packet packet) {
                 // Override the default gotPacket() function and process packet
                 System.out.println("********************************************");
-                System.out.println(handle.getTimestamp());
-                System.out.println(packet);
-                System.out.println(packet.getHeader());
-                System.out.println(packet.getPayload());
-                System.out.println(packet.length());
-                System.out.println(packet.getRawData());
+                System.out.println("timestamp : " + handle.getTimestamp());
+                System.out.println("packet : " + packet);
+                System.out.println("packet header : " + packet.getHeader());
+                System.out.println("packet payload : " + packet.getPayload());
+                System.out.println("packet length : " + packet.length());
+                System.out.println("packet raw data : " + packet.getRawData());
             }
         };
 
