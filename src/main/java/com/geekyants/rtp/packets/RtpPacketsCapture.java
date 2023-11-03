@@ -9,6 +9,9 @@ import org.pcap4j.util.NifSelector;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.sound.sampled.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 
 @Component
@@ -54,7 +57,16 @@ public class RtpPacketsCapture {
                 } catch (NotOpenException e) {
                     e.printStackTrace();
                 }
-                System.out.println("********************************************");
+                byte[] audioData = hexStringToByteArray(packet.toString());
+                // Specify the output WAV file
+                File outputFile = new File(handle.getTimestamp().toString().concat("output.wav"));
+                // Create an audio input stream from the byte array
+                try (AudioInputStream audioInputStream = new AudioInputStream(new ByteArrayInputStream(audioData), new AudioFormat(44100, 16, 1, true, false), audioData.length / 2)) {
+                    AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, outputFile);
+                    System.out.println("Audio file saved as output.wav");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         };
 
@@ -91,5 +103,16 @@ public class RtpPacketsCapture {
             e.printStackTrace();
         }
         return device;
+    }
+
+
+    public byte[] hexStringToByteArray(String hexString) {
+        int len = hexString.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4) + Character.digit(hexString.charAt(i + 1), 16));
+            System.out.println("********************************************");
+        }
+        return data;
     }
 }
