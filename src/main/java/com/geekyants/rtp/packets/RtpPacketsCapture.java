@@ -7,6 +7,9 @@ import org.pcap4j.util.NifSelector;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.sound.sampled.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -32,8 +35,8 @@ public class RtpPacketsCapture {
         handle = device.openLive(snapshotLength, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, readTimeout);
         PcapDumper dumper = handle.dumpOpen("out.pcap");
 
-//        String filter = "udp port 5060";
-//        handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
+        String filter = "udp port 5060";
+        handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
 
         // Create a listener that defines what to do with the received packets
         PacketListener listener = new PacketListener() {
@@ -47,6 +50,19 @@ public class RtpPacketsCapture {
                 System.out.println("packet payload : " + packet.getPayload());
                 System.out.println("packet length : " + packet.length());
                 System.out.println("packet raw data : " + packet.getRawData());
+
+                byte[] audioData = hexStringToByteArray(packet.toString());
+                // Specify the output WAV file
+                File outputFile = new File("output.wav");
+                // Create an audio input stream from the byte array
+                try (AudioInputStream audioInputStream = new AudioInputStream(new ByteArrayInputStream(audioData), new AudioFormat(44100, 16, 1, true, false), audioData.length / 2)) {
+                    AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, outputFile);
+                    System.out.println("Audio file saved as output.wav");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                System.out.println("********************************************");
 
                 // Dump packets to file
                 try {
@@ -90,5 +106,23 @@ public class RtpPacketsCapture {
             e.printStackTrace();
         }
         return device;
+    }
+
+    public static byte[] hexStringToByteArray(String hexString) {
+        int len = hexString.length();
+        byte[] data = new byte[(len + 1) / 2];
+        int dataIndex = 0;
+        int i = 0;
+        if (len % 2 != 0) {
+            data[dataIndex] = (byte) Character.digit(hexString.charAt(0), 16);
+            dataIndex++;
+            i = 1;
+        }
+        for (; i < len; i += 2) {
+            data[dataIndex] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4)
+                    + Character.digit(hexString.charAt(i + 1), 16));
+            dataIndex++;
+        }
+        return data;
     }
 }
