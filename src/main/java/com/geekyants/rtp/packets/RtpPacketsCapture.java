@@ -36,10 +36,8 @@ public class RtpPacketsCapture {
         handle = device.openLive(snapshotLength, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, readTimeout);
         PcapDumper dumper = handle.dumpOpen("out.pcap");
 
-        String filter = "udp port 5004";
+        String filter = "udp";
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
-
-        AtomicInteger packetCount = new AtomicInteger(0);
 
         // Create a listener that defines what to do with the received packets
         PacketListener listener = new PacketListener() {
@@ -54,17 +52,28 @@ public class RtpPacketsCapture {
                 System.out.println("packet length : " + packet.length());
                 System.out.println("packet raw data : " + packet.getRawData());
 
-                byte[] audioData = hexStringToByteArray(packet.toString());
-                // Specify the output WAV file
-                File outputFile = new File(packetCount + " " + "output.wav");
-                // Create an audio input stream from the byte array
-                try (AudioInputStream audioInputStream = new AudioInputStream(new ByteArrayInputStream(audioData), new AudioFormat(44100, 16, 1, true, false), audioData.length / 2)) {
-                    AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, outputFile);
-                    System.out.println("Audio file saved as output.wav");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                if (packet.contains(UdpPacket.class)) {
+                    System.out.println("packet contains UdpPacket.class");
+                    UdpPacket udpPacket = packet.get(UdpPacket.class);
+                    byte[] udpPayload = udpPacket.getPayload().getRawData();
 
+                    // Check if the payload represents an RTP packet
+                    if (udpPayload.length >= 12) {
+                        System.out.println("udpPayload.length >= 12");
+                        // Parse the RTP header
+                        int payloadType = udpPayload[1] & 0x7F;  // Extract payload type
+
+                        // Extract audio data (skip RTP header)
+                        byte[] audioData = Arrays.copyOfRange(udpPayload, 12, udpPayload.length);
+
+                        // Depending on the payloadType, choose the appropriate decoder
+//                        if (payloadType == YOUR_AUDIO_CODEC_TYPE) {
+                            // Decode the audio data using the corresponding decoder
+                            // Example: decode and play audio using a decoder library
+                            // AudioDecoder.decodeAndPlay(audioData);
+//                        }
+                    }
+                }
                 System.out.println("********************************************");
 
                 // Dump packets to file
@@ -73,8 +82,6 @@ public class RtpPacketsCapture {
                 } catch (NotOpenException e) {
                     e.printStackTrace();
                 }
-
-                packetCount.incrementAndGet();
             }
         };
 
@@ -111,23 +118,5 @@ public class RtpPacketsCapture {
             e.printStackTrace();
         }
         return device;
-    }
-
-    public static byte[] hexStringToByteArray(String hexString) {
-        int len = hexString.length();
-        byte[] data = new byte[(len + 1) / 2];
-        int dataIndex = 0;
-        int i = 0;
-        if (len % 2 != 0) {
-            data[dataIndex] = (byte) Character.digit(hexString.charAt(0), 16);
-            dataIndex++;
-            i = 1;
-        }
-        for (; i < len; i += 2) {
-            data[dataIndex] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4)
-                    + Character.digit(hexString.charAt(i + 1), 16));
-            dataIndex++;
-        }
-        return data;
     }
 }
