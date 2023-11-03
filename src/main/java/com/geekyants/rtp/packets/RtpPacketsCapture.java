@@ -7,12 +7,7 @@ import org.pcap4j.util.NifSelector;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import javax.sound.sampled.*;
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class RtpPacketsCapture {
@@ -39,8 +34,6 @@ public class RtpPacketsCapture {
         String filter = "udp";
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
 
-        AtomicInteger packetCount = new AtomicInteger(0);
-
         // Create a listener that defines what to do with the received packets
         PacketListener listener = new PacketListener() {
             @Override
@@ -53,6 +46,7 @@ public class RtpPacketsCapture {
                 System.out.println("packet payload : " + packet.getPayload());
                 System.out.println("packet length : " + packet.length());
                 System.out.println("packet raw data : " + packet.getRawData());
+                System.out.println("packet.contains(UdpPacket.class) : " + packet.contains(UdpPacket.class));
                 System.out.println("********************************************");
 
                 // Dump packets to file
@@ -61,7 +55,6 @@ public class RtpPacketsCapture {
                 } catch (NotOpenException e) {
                     e.printStackTrace();
                 }
-                packetCount.incrementAndGet();
             }
         };
 
