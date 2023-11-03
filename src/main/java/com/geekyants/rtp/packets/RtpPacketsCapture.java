@@ -36,7 +36,7 @@ public class RtpPacketsCapture {
         handle = device.openLive(snapshotLength, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, readTimeout);
         PcapDumper dumper = handle.dumpOpen("out.pcap");
 
-        String filter = "udp";
+        String filter = "udp port 5004";
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
 
         AtomicInteger packetCount = new AtomicInteger(0);
