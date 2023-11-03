@@ -13,6 +13,7 @@ import javax.sound.sampled.AudioSystem;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 @Component
 public class RtpPacketsCapture {
@@ -50,7 +51,7 @@ public class RtpPacketsCapture {
                 System.out.println("packet header : " + packet.getHeader());
                 System.out.println("packet payload : " + packet.getPayload());
                 System.out.println("packet length : " + packet.length());
-                System.out.println("packet raw data : " + packet.getRawData());
+                System.out.println("packet raw data : " + Arrays.toString(packet.getRawData()));
                 System.out.println("********************************************");
 
                 // Dump packets to file
@@ -95,20 +96,5 @@ public class RtpPacketsCapture {
             e.printStackTrace();
         }
         return device;
-    }
-
-    public void saveAudioDataAsFile(byte[] audioData) {
-        // Replace with your logic to convert and save audio data to a file
-        // Example code below saves audioData as a WAV file
-        File audioFile = new File("output.wav");
-
-        AudioFormat audioFormat = new AudioFormat(44100, 16, 1, true, false);
-        AudioInputStream audioInputStream = new AudioInputStream(new ByteArrayInputStream(audioData), audioFormat, audioData.length / 2);
-
-        try {
-            AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, audioFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
