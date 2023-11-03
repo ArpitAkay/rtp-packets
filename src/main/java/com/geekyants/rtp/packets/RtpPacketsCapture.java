@@ -40,8 +40,6 @@ public class RtpPacketsCapture {
         String filter = "udp port 5060";
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
 
-        AtomicInteger counter = new AtomicInteger(0);
-
         // Create a listener that defines what to do with the received packets
         PacketListener listener = new PacketListener() {
             @Override
@@ -61,17 +59,6 @@ public class RtpPacketsCapture {
                 } catch (NotOpenException e) {
                     e.printStackTrace();
                 }
-                byte[] audioData = hexStringToByteArray(packet.toString());
-                // Specify the output WAV file
-                File outputFile = new File(counter + " " + "output.wav");
-                // Create an audio input stream from the byte array
-                try (AudioInputStream audioInputStream = new AudioInputStream(new ByteArrayInputStream(audioData), new AudioFormat(44100, 16, 1, true, false), audioData.length / 2)) {
-                    AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, outputFile);
-                    System.out.println("Audio file saved as output.wav");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                counter.incrementAndGet();
             }
         };
 
@@ -108,15 +95,5 @@ public class RtpPacketsCapture {
             e.printStackTrace();
         }
         return device;
-    }
-
-
-    public byte[] hexStringToByteArray(String hexString) {
-        int len = hexString.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4) + Character.digit(hexString.charAt(i + 1), 16));
-        }
-        return data;
     }
 }
