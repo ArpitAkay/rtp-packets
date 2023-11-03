@@ -1,10 +1,7 @@
 package com.geekyants.rtp.packets;
 
 import org.pcap4j.core.*;
-import org.pcap4j.packet.EthernetPacket;
-import org.pcap4j.packet.IpV4Packet;
 import org.pcap4j.packet.Packet;
-import org.pcap4j.packet.UdpPacket;
 import org.pcap4j.util.NifSelector;
 import org.springframework.stereotype.Component;
 
@@ -49,17 +46,11 @@ public class RtpPacketsCapture {
                 // Override the default gotPacket() function and process packet
                 System.out.println("********************************************");
                 System.out.println("timestamp : " + handle.getTimestamp());
-                System.out.println("packet : " + packet);
+                System.out.println(packet);
                 System.out.println("packet header : " + packet.getHeader());
                 System.out.println("packet payload : " + packet.getPayload());
                 System.out.println("packet length : " + packet.length());
                 System.out.println("packet raw data : " + packet.getRawData());
-                byte[] binaryPayload = hexStringToByteArray(new String(packet.getRawData()));
-                try {
-                    writeWavFile("audio.wav", binaryPayload);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
                 System.out.println("********************************************");
 
                 // Dump packets to file
@@ -106,23 +97,17 @@ public class RtpPacketsCapture {
         return device;
     }
 
-    private byte[] hexStringToByteArray(String hexString) {
-        int length = hexString.length();
-        byte[] data = new byte[length / 2];
-        for (int i = 0; i < length; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4) +
-                    Character.digit(hexString.charAt(i + 1), 16));
-        }
-        return data;
-    }
+    public void saveAudioDataAsFile(byte[] audioData) {
+        // Replace with your logic to convert and save audio data to a file
+        // Example code below saves audioData as a WAV file
+        File audioFile = new File("output.wav");
 
-    private void writeWavFile(String filename, byte[] audioData) throws IOException {
-        AudioFormat audioFormat = new AudioFormat(8000, 16, 1, true, false);
+        AudioFormat audioFormat = new AudioFormat(44100, 16, 1, true, false);
         AudioInputStream audioInputStream = new AudioInputStream(new ByteArrayInputStream(audioData), audioFormat, audioData.length / 2);
 
         try {
-            AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, new File(filename));
-        } catch (Exception e) {
+            AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, audioFile);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
