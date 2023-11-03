@@ -12,7 +12,7 @@ import java.io.IOException;
 public class RtpPacketsCapture {
 
     @PostConstruct
-    public void captureRtpPackets() throws PcapNativeException {
+    public void captureRtpPackets() throws PcapNativeException, NotOpenException {
         System.out.println("Capturing RTP packets");
         PcapNetworkInterface device = getNetworkDevice();
         System.out.println("You chose: " + device);
@@ -29,6 +29,9 @@ public class RtpPacketsCapture {
         final PcapHandle handle;
         handle = device.openLive(snapshotLength, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, readTimeout);
 
+        String filter = "udp port 5060";
+        handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
+
         // Create a listener that defines what to do with the received packets
         PacketListener listener = new PacketListener() {
             @Override
@@ -37,12 +40,16 @@ public class RtpPacketsCapture {
                 System.out.println("********************************************");
                 System.out.println(handle.getTimestamp());
                 System.out.println(packet);
+                System.out.println(packet.getHeader());
+                System.out.println(packet.getPayload());
+                System.out.println(packet.length());
+                System.out.println(packet.getRawData());
             }
         };
 
         // Tell the handle to loop using the listener we created
         try {
-            int maxPackets = 500000000;
+            int maxPackets = 50;
             handle.loop(maxPackets, listener);
         } catch (InterruptedException | PcapNativeException | NotOpenException e) {
             e.printStackTrace();
