@@ -9,6 +9,12 @@ import org.pcap4j.util.NifSelector;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 
 @Component
@@ -48,7 +54,12 @@ public class RtpPacketsCapture {
                 System.out.println("packet payload : " + packet.getPayload());
                 System.out.println("packet length : " + packet.length());
                 System.out.println("packet raw data : " + packet.getRawData());
-                System.out.println("packet.get(UdpPacket.class) : " + packet.get(UdpPacket.class));
+                byte[] binaryPayload = hexStringToByteArray(new String(packet.getRawData()));
+                try {
+                    writeWavFile("audio.wav", binaryPayload);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 System.out.println("********************************************");
 
                 // Dump packets to file
@@ -93,5 +104,26 @@ public class RtpPacketsCapture {
             e.printStackTrace();
         }
         return device;
+    }
+
+    private byte[] hexStringToByteArray(String hexString) {
+        int length = hexString.length();
+        byte[] data = new byte[length / 2];
+        for (int i = 0; i < length; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4) +
+                    Character.digit(hexString.charAt(i + 1), 16));
+        }
+        return data;
+    }
+
+    private void writeWavFile(String filename, byte[] audioData) throws IOException {
+        AudioFormat audioFormat = new AudioFormat(8000, 16, 1, true, false);
+        AudioInputStream audioInputStream = new AudioInputStream(new ByteArrayInputStream(audioData), audioFormat, audioData.length / 2);
+
+        try {
+            AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, new File(filename));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
