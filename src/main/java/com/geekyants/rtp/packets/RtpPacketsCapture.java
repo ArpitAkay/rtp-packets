@@ -1,6 +1,8 @@
 package com.geekyants.rtp.packets;
 
 import org.pcap4j.core.*;
+import org.pcap4j.packet.EthernetPacket;
+import org.pcap4j.packet.IpV4Packet;
 import org.pcap4j.packet.Packet;
 import org.pcap4j.packet.UdpPacket;
 import org.pcap4j.util.NifSelector;
@@ -46,7 +48,12 @@ public class RtpPacketsCapture {
                 System.out.println("packet payload : " + packet.getPayload());
                 System.out.println("packet length : " + packet.length());
                 System.out.println("packet raw data : " + packet.getRawData());
-                System.out.println("packet.contains(UdpPacket.class) : " + packet.contains(UdpPacket.class));
+                EthernetPacket ethPacket = packet.get(EthernetPacket.class);
+                IpV4Packet ipPacket = ethPacket.get(IpV4Packet.class);
+                UdpPacket udpPacket = ipPacket.get(UdpPacket.class);
+                System.out.println("ethernet packet : " + ethPacket);
+                System.out.println("ip packet : " + ipPacket);
+                System.out.println("udp packet : " + udpPacket);
                 System.out.println("********************************************");
 
                 // Dump packets to file
