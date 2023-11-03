@@ -48,12 +48,7 @@ public class RtpPacketsCapture {
                 System.out.println("packet payload : " + packet.getPayload());
                 System.out.println("packet length : " + packet.length());
                 System.out.println("packet raw data : " + packet.getRawData());
-                EthernetPacket ethPacket = packet.get(EthernetPacket.class);
-                IpV4Packet ipPacket = ethPacket.get(IpV4Packet.class);
-                UdpPacket udpPacket = ipPacket.get(UdpPacket.class);
-                System.out.println("ethernet packet : " + ethPacket);
-                System.out.println("ip packet : " + ipPacket);
-                System.out.println("udp packet : " + udpPacket);
+                System.out.println("packet.get(UdpPacket.class) : " + packet.get(UdpPacket.class));
                 System.out.println("********************************************");
 
                 // Dump packets to file
