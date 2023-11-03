@@ -52,6 +52,7 @@ public class RtpPacketsCapture {
                 System.out.println("packet payload : " + packet.getPayload());
                 System.out.println("packet length : " + packet.length());
                 System.out.println("packet raw data : " + Arrays.toString(packet.getRawData()));
+                saveAudioDataAsFile(packet.getRawData());
                 System.out.println("********************************************");
 
                 // Dump packets to file
@@ -65,7 +66,7 @@ public class RtpPacketsCapture {
 
         // Tell the handle to loop using the listener we created
         try {
-            int maxPackets = 500;
+            int maxPackets = 5000;
             handle.loop(maxPackets, listener);
         } catch (InterruptedException | PcapNativeException | NotOpenException e) {
             e.printStackTrace();
@@ -96,5 +97,26 @@ public class RtpPacketsCapture {
             e.printStackTrace();
         }
         return device;
+    }
+
+    public void saveAudioDataAsFile(byte[] audioData) {
+        // Define the audio format based on your data
+        AudioFormat audioFormat = new AudioFormat(
+                AudioFormat.Encoding.PCM_SIGNED,
+                44100, 16, 1, 2, 44100, false
+        );
+
+        // Create an audio input stream from the byte array
+        AudioInputStream audioInputStream = new AudioInputStream(
+                new ByteArrayInputStream(audioData), audioFormat, audioData.length / 2
+        );
+
+        // Save the audio data to a WAV file
+        try {
+            File audioFile = new File("output.wav");
+            AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, audioFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
