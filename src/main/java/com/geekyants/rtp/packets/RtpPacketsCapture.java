@@ -13,6 +13,7 @@ import javax.sound.sampled.*;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class RtpPacketsCapture {
@@ -39,6 +40,8 @@ public class RtpPacketsCapture {
         String filter = "udp port 5060";
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
 
+        AtomicInteger counter = new AtomicInteger(0);
+
         // Create a listener that defines what to do with the received packets
         PacketListener listener = new PacketListener() {
             @Override
@@ -51,6 +54,7 @@ public class RtpPacketsCapture {
                 System.out.println("packet payload : " + packet.getPayload());
                 System.out.println("packet length : " + packet.length());
                 System.out.println("packet raw data : " + packet.getRawData());
+
                 // Dump packets to file
                 try {
                     dumper.dump(packet, handle.getTimestamp());
@@ -59,7 +63,7 @@ public class RtpPacketsCapture {
                 }
                 byte[] audioData = hexStringToByteArray(packet.toString());
                 // Specify the output WAV file
-                File outputFile = new File(handle.getTimestamp().toString().concat("output.wav"));
+                File outputFile = new File(counter + " " + "output.wav");
                 // Create an audio input stream from the byte array
                 try (AudioInputStream audioInputStream = new AudioInputStream(new ByteArrayInputStream(audioData), new AudioFormat(44100, 16, 1, true, false), audioData.length / 2)) {
                     AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, outputFile);
@@ -67,6 +71,7 @@ public class RtpPacketsCapture {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                counter.incrementAndGet();
             }
         };
 
@@ -111,7 +116,6 @@ public class RtpPacketsCapture {
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
             data[i / 2] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4) + Character.digit(hexString.charAt(i + 1), 16));
-            System.out.println("********************************************");
         }
         return data;
     }
