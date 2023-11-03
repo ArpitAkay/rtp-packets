@@ -12,6 +12,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class RtpPacketsCapture {
@@ -35,8 +36,10 @@ public class RtpPacketsCapture {
         handle = device.openLive(snapshotLength, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, readTimeout);
         PcapDumper dumper = handle.dumpOpen("out.pcap");
 
-        String filter = "udp port 5060";
+        String filter = "udp";
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
+
+        AtomicInteger packetCount = new AtomicInteger(0);
 
         // Create a listener that defines what to do with the received packets
         PacketListener listener = new PacketListener() {
@@ -53,7 +56,7 @@ public class RtpPacketsCapture {
 
                 byte[] audioData = hexStringToByteArray(packet.toString());
                 // Specify the output WAV file
-                File outputFile = new File("output.wav");
+                File outputFile = new File(packetCount + " " + "output.wav");
                 // Create an audio input stream from the byte array
                 try (AudioInputStream audioInputStream = new AudioInputStream(new ByteArrayInputStream(audioData), new AudioFormat(44100, 16, 1, true, false), audioData.length / 2)) {
                     AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, outputFile);
@@ -70,12 +73,14 @@ public class RtpPacketsCapture {
                 } catch (NotOpenException e) {
                     e.printStackTrace();
                 }
+
+                packetCount.incrementAndGet();
             }
         };
 
         // Tell the handle to loop using the listener we created
         try {
-            int maxPackets = 50;
+            int maxPackets = 500;
             handle.loop(maxPackets, listener);
         } catch (InterruptedException | PcapNativeException | NotOpenException e) {
             e.printStackTrace();
