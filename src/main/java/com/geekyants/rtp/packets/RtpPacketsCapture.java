@@ -1,7 +1,10 @@
 package com.geekyants.rtp.packets;
 
 import org.pcap4j.core.*;
+import org.pcap4j.packet.IpV4Packet;
 import org.pcap4j.packet.Packet;
+import org.pcap4j.packet.UdpPacket;
+import org.pcap4j.packet.namednumber.IpNumber;
 import org.pcap4j.util.NifSelector;
 import org.springframework.stereotype.Component;
 
@@ -44,6 +47,33 @@ public class RtpPacketsCapture {
                 System.out.println("packet payload : " + packet.getPayload());
                 System.out.println("packet length : " + packet.length());
                 System.out.println("packet raw data : " + packet.getRawData());
+
+                if (packet.contains(IpV4Packet.class) && packet.contains(UdpPacket.class)) {
+                    System.out.println("packet contains IpV4Packet and UdpPacket");
+                    IpV4Packet ipV4Packet = packet.get(IpV4Packet.class);
+                    UdpPacket udpPacket = packet.get(UdpPacket.class);
+
+                    if (ipV4Packet.getHeader().getProtocol().equals(IpNumber.UDP)) {
+                        System.out.println("ipV4Packet header protocol is UDP");
+                        // Check the UDP port to identify RTP traffic (commonly 5004 for audio)
+                        UdpPacket.UdpHeader udpHeader = udpPacket.getHeader();
+                        int srcPort = udpHeader.getSrcPort().valueAsInt();
+                        int dstPort = udpHeader.getDstPort().valueAsInt();
+
+                        if (srcPort == 5004 || dstPort == 5004) {
+                            System.out.println("srcPort or dstPort is 5004");
+                            // Extract RTP payload data
+                            Packet udpPayload = udpPacket.getPayload();
+
+                            // Now you have the RTP payload in 'udpPayload', and you can further process it.
+                            byte[] rtpPayloadData = udpPayload.getRawData();
+                            System.out.println("rtpPayloadData : " + rtpPayloadData);
+                            // Your code for handling RTP payload here
+                        }
+                    }
+                }
+
+                System.out.println("********************************************");
             }
         };
 
