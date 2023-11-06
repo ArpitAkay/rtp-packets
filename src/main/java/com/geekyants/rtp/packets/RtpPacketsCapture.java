@@ -6,12 +6,6 @@ import org.pcap4j.util.NifSelector;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import javax.sound.sampled.AudioFileFormat;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -96,26 +90,5 @@ public class RtpPacketsCapture {
             e.printStackTrace();
         }
         return device;
-    }
-
-    public void saveAudioDataAsFile(byte[] audioData) {
-        // Define the audio format based on your data
-        AudioFormat audioFormat = new AudioFormat(
-                AudioFormat.Encoding.PCM_SIGNED,
-                44100, 16, 1, 2, 44100, false
-        );
-
-        // Create an audio input stream from the byte array
-        AudioInputStream audioInputStream = new AudioInputStream(
-                new ByteArrayInputStream(audioData), audioFormat, audioData.length / 2
-        );
-
-        // Save the audio data to a WAV file
-        try {
-            File audioFile = new File("output.wav");
-            AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, audioFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
