@@ -73,7 +73,7 @@ public class RtpPacketsCapture {
 
         // Cleanup when complete
         dumper.close();
-        handle.close();
+//        handle.close();
     }
 
     public PcapNetworkInterface getNetworkDevice() {
