@@ -52,7 +52,6 @@ public class RtpPacketsCapture {
                 System.out.println("packet payload : " + packet.getPayload());
                 System.out.println("packet length : " + packet.length());
                 System.out.println("packet raw data : " + Arrays.toString(packet.getRawData()));
-                saveAudioDataAsFile(packet.getRawData());
                 System.out.println("********************************************");
 
                 // Dump packets to file
@@ -66,7 +65,7 @@ public class RtpPacketsCapture {
 
         // Tell the handle to loop using the listener we created
         try {
-            int maxPackets = 5000;
+            int maxPackets = 500;
             handle.loop(maxPackets, listener);
         } catch (InterruptedException | PcapNativeException | NotOpenException e) {
             e.printStackTrace();
