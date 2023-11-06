@@ -65,7 +65,7 @@ public class RtpPacketsCapture {
 
         // Tell the handle to loop using the listener we created
         try {
-            int maxPackets = 500;
+            int maxPackets = 1500;
             handle.loop(maxPackets, listener);
         } catch (InterruptedException | PcapNativeException | NotOpenException e) {
             e.printStackTrace();
