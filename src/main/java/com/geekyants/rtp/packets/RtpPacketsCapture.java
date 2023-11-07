@@ -2,8 +2,8 @@ package com.geekyants.rtp.packets;
 
 import org.pcap4j.core.*;
 import org.pcap4j.packet.Packet;
-import org.pcap4j.packet.namednumber.UdpPort;
 import org.pcap4j.util.NifSelector;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -12,6 +12,9 @@ import java.util.Arrays;
 
 @Component
 public class RtpPacketsCapture {
+
+    @Autowired
+    private AudioUtil audioUtil;
 
     @PostConstruct
     public void captureRtpPackets() throws PcapNativeException, NotOpenException {
@@ -64,6 +67,8 @@ public class RtpPacketsCapture {
         } catch (InterruptedException | PcapNativeException | NotOpenException e) {
             e.printStackTrace();
         }
+
+        audioUtil.convertPcapToRtpFile();
 
         // Print out handle statistics
         PcapStat stats = handle.getStats();
