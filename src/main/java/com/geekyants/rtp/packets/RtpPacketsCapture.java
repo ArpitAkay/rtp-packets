@@ -2,6 +2,7 @@ package com.geekyants.rtp.packets;
 
 import org.pcap4j.core.*;
 import org.pcap4j.packet.Packet;
+import org.pcap4j.packet.namednumber.UdpPort;
 import org.pcap4j.util.NifSelector;
 import org.springframework.stereotype.Component;
 
@@ -31,9 +32,8 @@ public class RtpPacketsCapture {
         handle = device.openLive(snapshotLength, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, readTimeout);
         PcapDumper dumper = handle.dumpOpen("out.pcap");
 
-        String filter = "udp and port 16488";
+        String filter = "udp";
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
-
         // Create a listener that defines what to do with the received packets
         PacketListener listener = new PacketListener() {
             @Override
@@ -45,7 +45,6 @@ public class RtpPacketsCapture {
                 System.out.println("packet header : " + packet.getHeader());
                 System.out.println("packet payload : " + packet.getPayload());
                 System.out.println("packet length : " + packet.length());
-                System.out.println(packet.getRawData());
                 System.out.println("packet raw data : " + Arrays.toString(packet.getRawData()));
                 System.out.println("********************************************");
 
