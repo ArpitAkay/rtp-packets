@@ -14,7 +14,7 @@ public class RtpPacketsCaptureViaCmd {
         System.out.println("Capturing RTP packets");
         try {
             String ssrc = getssrc();
-
+            System.out.println("SSRC: " + ssrc);
             ProcessBuilder processBuilder =
                     new ProcessBuilder("tshark", "-i", "enp0s1", "-f", "udp", "-R", "rtp.ssrc == " + ssrc, "-T", "fields", "-e", "rtp.payload");
             Process process = processBuilder.start();
@@ -88,7 +88,7 @@ public class RtpPacketsCaptureViaCmd {
             }
 
             process.destroy();
-
+            System.out.println("SSRC: " + firstNonEmptyValue);
             return firstNonEmptyValue;
         } catch (IOException e) {
             e.printStackTrace();
