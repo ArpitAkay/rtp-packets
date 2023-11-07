@@ -31,7 +31,7 @@ public class RtpPacketsCapture {
         handle = device.openLive(snapshotLength, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, readTimeout);
         PcapDumper dumper = handle.dumpOpen("out.pcap");
 
-        String filter = "udp and port 16488";
+        String filter = "rtp";
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
 
         // Create a listener that defines what to do with the received packets
@@ -74,7 +74,7 @@ public class RtpPacketsCapture {
 
         // Cleanup when complete
         dumper.close();
-//        handle.close();
+        handle.close();
     }
 
     public PcapNetworkInterface getNetworkDevice() {
