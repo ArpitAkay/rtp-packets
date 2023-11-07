@@ -31,6 +31,10 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-mongodb</artifactId>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.pcap4j/pcap4j-core -->
 		<dependency>
 			<groupId>org.pcap4j</groupId>

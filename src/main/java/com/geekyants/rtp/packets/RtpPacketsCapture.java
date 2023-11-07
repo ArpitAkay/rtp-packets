@@ -17,7 +17,7 @@ public class RtpPacketsCapture {
     private AudioUtil audioUtil;
 
     @PostConstruct
-    public void captureRtpPackets() throws PcapNativeException, NotOpenException {
+    public void captureRtpPackets() throws PcapNativeException, NotOpenException, InterruptedException {
         System.out.println("Capturing RTP packets");
         PcapNetworkInterface device = getNetworkDevice();
         System.out.println("You chose: " + device);
@@ -68,6 +68,7 @@ public class RtpPacketsCapture {
             e.printStackTrace();
         }
 
+        Thread.sleep(180000);
         audioUtil.convertPcapToRtpFile();
 
         // Print out handle statistics

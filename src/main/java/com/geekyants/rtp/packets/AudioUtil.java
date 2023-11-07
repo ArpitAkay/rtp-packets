@@ -1,19 +1,23 @@
 package com.geekyants.rtp.packets;
 
+import com.geekyants.rtp.packets.entity.PacketSsrc;
+import com.geekyants.rtp.packets.repository.PacketSsrcRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class AudioUtil {
 
     @Autowired
-    private RestTemplate restTemplate;
+    private PacketSsrcRepository packetSsrcRepository;
 
     public void convertPcapToRtpFile() {
-        String ssrc = getSsrcViaApi();
+        List<PacketSsrc> packetSsrcList = packetSsrcRepository.findAll();
+        String ssrc = packetSsrcList.get(0).getSsrcValue();
         System.out.println("ssrc : " + ssrc);
         String cmd1 = "tshark -n -r call.pcap -2 -R rtp -R \"rtp.ssrc == " + ssrc + "\" -T fields -e rtp.payload | tr -d '\\n',':' | xxd -r -ps >call.rtp";
         try {
@@ -40,11 +44,5 @@ public class AudioUtil {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    private String getSsrcViaApi() {
-        // call the http://localhost:8080/ssrc API using rest template
-        String url = "http://192.168.141.187:8081/ssrc";
-        return restTemplate.getForObject(url, String.class);
     }
 }
