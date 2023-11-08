@@ -36,7 +36,7 @@ public class RtpPacketsCapture {
         handle = device.openLive(snapshotLength, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, readTimeout);
         PcapDumper dumper = handle.dumpOpen("out.pcap");
 
-        String filter = "udp port 5060 and (sip.Method == \"REGISTER\")";
+        String filter = "udp port 5060 and (sip.Method == \"RINGING\")";
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
         // Create a listener that defines what to do with the received packets
         PacketListener listener = new PacketListener() {
