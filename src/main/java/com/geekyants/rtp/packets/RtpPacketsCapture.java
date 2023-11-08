@@ -68,7 +68,7 @@ public class RtpPacketsCapture {
             e.printStackTrace();
         }
 
-        Thread.sleep(30000);
+        Thread.sleep(180000);
         audioUtil.convertPcapToRtpFile();
 
         // Print out handle statistics
