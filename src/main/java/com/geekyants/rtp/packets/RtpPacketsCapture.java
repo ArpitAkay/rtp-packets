@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.util.Arrays;
 
 @Component
@@ -35,7 +36,7 @@ public class RtpPacketsCapture {
         handle = device.openLive(snapshotLength, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, readTimeout);
         PcapDumper dumper = handle.dumpOpen("out.pcap");
 
-        String filter = "udp";
+        String filter = "udp port 5060 and (sip.Method == \"REGISTER\")";
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
         // Create a listener that defines what to do with the received packets
         PacketListener listener = new PacketListener() {
