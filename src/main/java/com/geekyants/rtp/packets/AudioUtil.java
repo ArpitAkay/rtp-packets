@@ -19,7 +19,7 @@ public class AudioUtil {
         List<PacketSsrc> packetSsrcList = packetSsrcRepository.findAll();
         String ssrc = packetSsrcList.get(0).getSsrcValue();
         System.out.println("ssrc : " + ssrc);
-        String cmd1 = "tshark -n -r call.pcap -2 -R rtp -R \"rtp.ssrc == " + ssrc + "\" -T fields -e rtp.payload | tr -d '\\n',':' | xxd -r -ps >call.rtp";
+        String cmd1 = "tshark -n -r out.pcap -2 -R rtp -R \"rtp.ssrc == " + ssrc + "\" -T fields -e rtp.payload | tr -d '\\n',':' | xxd -r -ps >call.rtp";
         try {
             // Execute the command
             Process process = Runtime.getRuntime().exec(new String[] { "bash", "-c", cmd1 });
