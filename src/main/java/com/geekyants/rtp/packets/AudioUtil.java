@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class AudioUtil {
@@ -22,30 +24,35 @@ public class AudioUtil {
         try {
             String cmd1 = "tshark -r out.pcap -Y \"rtp.payload == 00\" -T fields -e rtp.ssrc";
 
-            Process process1 = Runtime.getRuntime().exec(cmd1);
+            // Create ProcessBuilder
+            ProcessBuilder processBuilder = new ProcessBuilder(cmd1.split("\\s+"));
+
+            // Redirect error stream to output stream
+            processBuilder.redirectErrorStream(true);
+
+            // Start the process
+            Process process1 = processBuilder.start();
+
+            // Read the output
             BufferedReader reader = new BufferedReader(new InputStreamReader(process1.getInputStream()));
+            StringBuilder output = new StringBuilder();
             String line;
-            String ssrcValue = null;
             while ((line = reader.readLine()) != null) {
-                // Check if the line contains the desired value
-                if (line.contains("0x685b03aa")) {
-                    // Extract the value
-                    String value = line.substring(line.indexOf("0x685b03aa"));
-                    // Store the value in a variable
-                    ssrcValue = value.trim();
-                    System.out.println("SSRC value: " + ssrcValue);
-                    break;
-                }
+                output.append(line).append("\n");
             }
 
-            int exitCode1 = process.waitFor();
+            // Wait for the process to complete
+            int exitCode1 = process1.waitFor();
+
+            // Print the output
+            System.out.println("Command output:\n" + output);
 
             if(exitCode1 == 0) {
                 System.out.println("First command executed successfully with exit code : " + exitCode1);
                 
-                System.out.println("Captured Output from first command : " + ssrcValue);
+                System.out.println("Captured Output from first command : " + output);
 
-                String cmd2 = "tshark -n -r out.pcap -2 -R rtp -R \"rtp.ssrc == " + ssrcValue + "\" -T fields -e rtp.payload | tr -d '\\n',':' | xxd -r -ps >call.rtp";
+                String cmd2 = "tshark -n -r out.pcap -2 -R rtp -R \"rtp.ssrc == " + output + "\" -T fields -e rtp.payload | tr -d '\\n',':' | xxd -r -ps >call.rtp";
 
                 Process process2 = Runtime.getRuntime().exec(new String[]{"bash", "-c", cmd2});
                 int exitCode2 = process2.waitFor();
