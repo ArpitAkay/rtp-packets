@@ -1,21 +1,29 @@
 package com.geekyants.rtp.packets;
 
+import com.geekyants.rtp.packets.entity.DtmfEventRequest;
+import com.geekyants.rtp.packets.repository.DtmfEventRequestRepository;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.Packet;
 import org.pcap4j.util.NifSelector;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.net.Inet4Address;
 import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class RtpPacketsCapture {
+    private final AudioUtil audioUtil;
+    private final DtmfEventRequestRepository dtmfEventRequestRepository;
 
-    @Autowired
-    private AudioUtil audioUtil;
+    public RtpPacketsCapture(
+            AudioUtil audioUtil,
+            DtmfEventRequestRepository dtmfEventRequestRepository
+    ) {
+        this.audioUtil = audioUtil;
+        this.dtmfEventRequestRepository = dtmfEventRequestRepository;
+    }
 
     @PostConstruct
     public void captureRtpPackets() throws PcapNativeException, NotOpenException, InterruptedException {
@@ -36,7 +44,7 @@ public class RtpPacketsCapture {
         handle = device.openLive(snapshotLength, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, readTimeout);
         PcapDumper dumper = handle.dumpOpen("out.pcap");
 
-        String filter = "udp port 5060 and (sip.Method == \"RINGING\")";
+        String filter = "udp";
         handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
         // Create a listener that defines what to do with the received packets
         PacketListener listener = new PacketListener() {
@@ -61,26 +69,32 @@ public class RtpPacketsCapture {
             }
         };
 
-        // Tell the handle to loop using the listener we created
-        try {
-            int maxPackets = 1000;
-            handle.loop(maxPackets, listener);
-        } catch (InterruptedException | PcapNativeException | NotOpenException e) {
-            e.printStackTrace();
+        List<DtmfEventRequest> dtmfEventRequestList = dtmfEventRequestRepository.findAll();
+
+        if(!dtmfEventRequestList.isEmpty()) {
+            boolean asterisk = dtmfEventRequestList.get(0).isAsterisk();
+            if(asterisk) {
+                // Tell the handle to loop using the listener we created
+                try {
+                    int maxPackets = 1000;
+                    handle.loop(maxPackets, listener);
+                } catch (InterruptedException | PcapNativeException | NotOpenException e) {
+                    e.printStackTrace();
+                }
+
+                audioUtil.convertPcapToRtpFile();
+
+                // Print out handle statistics
+                PcapStat stats = handle.getStats();
+                System.out.println("Packets received: " + stats.getNumPacketsReceived());
+                System.out.println("Packets dropped: " + stats.getNumPacketsDropped());
+                System.out.println("Packets dropped by interface: " + stats.getNumPacketsDroppedByIf());
+
+                // Cleanup when complete
+                dumper.close();
+                handle.close();
+            }
         }
-
-        Thread.sleep(180000);
-        audioUtil.convertPcapToRtpFile();
-
-        // Print out handle statistics
-        PcapStat stats = handle.getStats();
-        System.out.println("Packets received: " + stats.getNumPacketsReceived());
-        System.out.println("Packets dropped: " + stats.getNumPacketsDropped());
-        System.out.println("Packets dropped by interface: " + stats.getNumPacketsDroppedByIf());
-
-        // Cleanup when complete
-        dumper.close();
-        handle.close();
     }
 
     public PcapNetworkInterface getNetworkDevice() {

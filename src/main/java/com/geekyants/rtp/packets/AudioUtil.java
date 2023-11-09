@@ -1,45 +1,67 @@
 package com.geekyants.rtp.packets;
 
-import com.geekyants.rtp.packets.entity.PacketSsrc;
-import com.geekyants.rtp.packets.repository.PacketSsrcRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.geekyants.rtp.packets.repository.DtmfEventRequestRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.List;
+import java.io.InputStreamReader;
 
 @Component
 public class AudioUtil {
 
-    @Autowired
-    private PacketSsrcRepository packetSsrcRepository;
+    private final DtmfEventRequestRepository packetSsrcRepository;
+
+    public AudioUtil(
+            DtmfEventRequestRepository packetSsrcRepository
+    ) {
+        this.packetSsrcRepository = packetSsrcRepository;
+    }
 
     public void convertPcapToRtpFile() {
-        List<PacketSsrc> packetSsrcList = packetSsrcRepository.findAll();
-        String ssrc = packetSsrcList.get(0).getSsrcValue();
-        System.out.println("ssrc : " + ssrc);
-        String cmd1 = "tshark -n -r out.pcap -2 -R rtp -R \"rtp.ssrc == " + ssrc + "\" -T fields -e rtp.payload | tr -d '\\n',':' | xxd -r -ps >call.rtp";
         try {
-            // Execute the command
-            Process process = Runtime.getRuntime().exec(new String[] { "bash", "-c", cmd1 });
-            int exitCode = process.waitFor();
+            String cmd1 = "tshark -r out.pcap -Y \"rtp.payload == 00\" -T fields -e rtp.ssrc";
+            Process process1 = Runtime.getRuntime().exec(new String[]{"bash", "-c", cmd1});
 
-            // Check the exit code to see if the command was successful
-            if (exitCode == 0) {
-                System.out.println("First command executed successfully.");
-                String cmd2 = "sox -t ul -r 8000 -c 1 call.rtp call.wav";
-                Process process2 = Runtime.getRuntime().exec(new String[] { "bash", "-c", cmd2 });
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process1.getInputStream()));
+            StringBuilder output = new StringBuilder();
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+
+            int exitCode1 = process1.waitFor();
+
+            if(exitCode1 == 0) {
+                System.out.println("First command executed successfully with exit code : " + exitCode1);
+
+                String capturedOutput = output.toString();
+                System.out.println("Captured Output from first command : " + capturedOutput);
+
+                String cmd2 = "tshark -n -r out.pcap -2 -R rtp -R \"rtp.ssrc == " + capturedOutput + "\" -T fields -e rtp.payload | tr -d '\\n',':' | xxd -r -ps >call.rtp";
+
+                Process process2 = Runtime.getRuntime().exec(new String[]{"bash", "-c", cmd2});
                 int exitCode2 = process2.waitFor();
 
-                // Check the exit code of the second command
                 if (exitCode2 == 0) {
-                    System.out.println("Second command executed successfully.");
+                    System.out.println("Second command executed successfully : " + exitCode2);
+
+                    String cmd3 = "sox -t ul -r 8000 -c 1 call.rtp call.wav";
+                    Process process3 = Runtime.getRuntime().exec(new String[]{"bash", "-c", cmd3});
+                    int exitCode3 = process3.waitFor();
+
+                    // Check the exit code of the second command
+                    if (exitCode3 == 0) {
+                        System.out.println("Third command executed successfully with exit code : " + exitCode3);
+                    } else {
+                        System.err.println("Third command failed with exit code : " + exitCode3);
+                    }
                 } else {
                     System.err.println("Second command failed with exit code: " + exitCode2);
                 }
             } else {
-                System.err.println("First command failed with exit code: " + exitCode);
+                System.err.println("First command failed with exit code: " + exitCode1);
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
