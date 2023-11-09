@@ -21,7 +21,7 @@ public class AudioUtil {
     public void convertPcapToRtpFile() {
         try {
             String cmd1 = "tshark -r out.pcap -Y \"rtp.payload == 00\" -T fields -e rtp.ssrc";
-            Process process1 = Runtime.getRuntime().exec(new String[]{"bash", "-c", cmd1});
+            Process process1 = Runtime.getRuntime().exec(cmd1);
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(process1.getInputStream()));
             StringBuilder output = new StringBuilder();
