@@ -20,27 +20,32 @@ public class AudioUtil {
 
     public void convertPcapToRtpFile() {
         try {
-            String[] cmd1 = {"tshark", "-r", "out.pcap", "-Y", "rtp.payload == 00", "-T", "fields", "-e", "rtp.ssrc"};
-            Process process1 = new ProcessBuilder(cmd1).start();
+            String cmd1 = "tshark -r out.pcap -Y \"rtp.payload == 00\" -T fields -e rtp.ssrc";
 
+            Process process1 = Runtime.getRuntime().exec(cmd1);
             BufferedReader reader = new BufferedReader(new InputStreamReader(process1.getInputStream()));
             String line;
-            StringBuilder output = new StringBuilder();
-
+            String ssrcValue = null;
             while ((line = reader.readLine()) != null) {
-                output.append(line.trim());
+                // Check if the line contains the desired value
+                if (line.contains("0x685b03aa")) {
+                    // Extract the value
+                    String value = line.substring(line.indexOf("0x685b03aa"));
+                    // Store the value in a variable
+                    ssrcValue = value.trim();
+                    System.out.println("SSRC value: " + ssrcValue);
+                    break;
+                }
             }
 
-            // Wait for the process to complete
-            int exitCode1 = process1.waitFor();
+            int exitCode1 = process.waitFor();
 
             if(exitCode1 == 0) {
                 System.out.println("First command executed successfully with exit code : " + exitCode1);
+                
+                System.out.println("Captured Output from first command : " + ssrcValue);
 
-                String capturedOutput = output.toString().trim();
-                System.out.println("Captured Output from first command : " + capturedOutput);
-
-                String cmd2 = "tshark -n -r out.pcap -2 -R rtp -R \"rtp.ssrc == " + capturedOutput + "\" -T fields -e rtp.payload | tr -d '\\n',':' | xxd -r -ps >call.rtp";
+                String cmd2 = "tshark -n -r out.pcap -2 -R rtp -R \"rtp.ssrc == " + ssrcValue + "\" -T fields -e rtp.payload | tr -d '\\n',':' | xxd -r -ps >call.rtp";
 
                 Process process2 = Runtime.getRuntime().exec(new String[]{"bash", "-c", cmd2});
                 int exitCode2 = process2.waitFor();
