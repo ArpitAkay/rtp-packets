@@ -70,7 +70,7 @@ public class RtpPacketsCapture {
         };
 
         List<DtmfEventRequest> dtmfEventRequestList = dtmfEventRequestRepository.findAll();
-
+        System.out.println("dtmfEventRequestList : " + dtmfEventRequestList);
         if(!dtmfEventRequestList.isEmpty()) {
             boolean asterisk = dtmfEventRequestList.get(0).isAsterisk();
             if(asterisk) {
