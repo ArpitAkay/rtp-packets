@@ -20,23 +20,24 @@ public class AudioUtil {
 
     public void convertPcapToRtpFile() {
         try {
-            String cmd1 = "tshark -r out.pcap -Y \"rtp.payload == 00\" -T fields -e rtp.ssrc";
-            Process process1 = Runtime.getRuntime().exec(cmd1);
+            String[] cmd1 = {"tshark", "-r", "out.pcap", "-Y", "rtp.payload == 00", "-T", "fields", "-e", "rtp.ssrc"};
+            Process process1 = new ProcessBuilder(cmd1).start();
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(process1.getInputStream()));
+            String line;
             StringBuilder output = new StringBuilder();
 
-            String line;
             while ((line = reader.readLine()) != null) {
-                output.append(line).append("\n");
+                output.append(line.trim());
             }
 
+            // Wait for the process to complete
             int exitCode1 = process1.waitFor();
 
             if(exitCode1 == 0) {
                 System.out.println("First command executed successfully with exit code : " + exitCode1);
 
-                String capturedOutput = output.toString();
+                String capturedOutput = output.toString().trim();
                 System.out.println("Captured Output from first command : " + capturedOutput);
 
                 String cmd2 = "tshark -n -r out.pcap -2 -R rtp -R \"rtp.ssrc == " + capturedOutput + "\" -T fields -e rtp.payload | tr -d '\\n',':' | xxd -r -ps >call.rtp";
@@ -62,6 +63,14 @@ public class AudioUtil {
                 }
             } else {
                 System.err.println("First command failed with exit code: " + exitCode1);
+                BufferedReader errorReader = new BufferedReader(new InputStreamReader(process1.getErrorStream()));
+                StringBuilder errorMessage = new StringBuilder();
+
+                while ((line = errorReader.readLine()) != null) {
+                    errorMessage.append(line.trim());
+                }
+
+                System.out.println("Error: " + errorMessage.toString());
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
