@@ -1,6 +1,5 @@
 package com.geekyants.rtp.packets;
 
-import com.geekyants.rtp.packets.entity.DtmfEventRequest;
 import com.geekyants.rtp.packets.repository.DtmfEventRequestRepository;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.Packet;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 
 @Component
 public class RtpPacketsCapture {
@@ -60,27 +58,18 @@ public class RtpPacketsCapture {
                 System.out.println("packet raw data : " + Arrays.toString(packet.getRawData()));
                 System.out.println("********************************************");
 
-                List<DtmfEventRequest> dtmfEventRequestList = dtmfEventRequestRepository.findAll();
-                System.out.println("dtmfEventRequestList : " + dtmfEventRequestList);
-
-                if (!dtmfEventRequestList.isEmpty()) {
-                    boolean asterisk = dtmfEventRequestList.get(0).isAsterisk();
-                    boolean hash = dtmfEventRequestList.get(0).isHash();
-                    if (asterisk && !hash) {
-                        // Dump packets to file
-                        try {
-                            dumper.dump(packet, handle.getTimestamp());
-                        } catch (NotOpenException e) {
-                            e.printStackTrace();
-                        }
-                    }
+                // Dump packets to file
+                try {
+                    dumper.dump(packet, handle.getTimestamp());
+                } catch (NotOpenException e) {
+                    e.printStackTrace();
                 }
             }
         };
 
         // Tell the handle to loop using the listener we created
         try {
-            int maxPackets = 20000;
+            int maxPackets = 5000;
             handle.loop(maxPackets, listener);
         } catch (InterruptedException | PcapNativeException | NotOpenException e) {
             e.printStackTrace();
