@@ -60,41 +60,43 @@ public class RtpPacketsCapture {
                 System.out.println("packet raw data : " + Arrays.toString(packet.getRawData()));
                 System.out.println("********************************************");
 
-                // Dump packets to file
-                try {
-                    dumper.dump(packet, handle.getTimestamp());
-                } catch (NotOpenException e) {
-                    e.printStackTrace();
+                List<DtmfEventRequest> dtmfEventRequestList = dtmfEventRequestRepository.findAll();
+                System.out.println("dtmfEventRequestList : " + dtmfEventRequestList);
+
+                if (!dtmfEventRequestList.isEmpty()) {
+                    boolean asterisk = dtmfEventRequestList.get(0).isAsterisk();
+                    boolean hash = dtmfEventRequestList.get(0).isHash();
+                    if (asterisk && !hash) {
+                        // Dump packets to file
+                        try {
+                            dumper.dump(packet, handle.getTimestamp());
+                        } catch (NotOpenException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
         };
 
-        List<DtmfEventRequest> dtmfEventRequestList = dtmfEventRequestRepository.findAll();
-        System.out.println("dtmfEventRequestList : " + dtmfEventRequestList);
-        if(!dtmfEventRequestList.isEmpty()) {
-            boolean asterisk = dtmfEventRequestList.get(0).isAsterisk();
-            if(asterisk) {
-                // Tell the handle to loop using the listener we created
-                try {
-                    int maxPackets = 1000;
-                    handle.loop(maxPackets, listener);
-                } catch (InterruptedException | PcapNativeException | NotOpenException e) {
-                    e.printStackTrace();
-                }
-
-                audioUtil.convertPcapToRtpFile();
-
-                // Print out handle statistics
-                PcapStat stats = handle.getStats();
-                System.out.println("Packets received: " + stats.getNumPacketsReceived());
-                System.out.println("Packets dropped: " + stats.getNumPacketsDropped());
-                System.out.println("Packets dropped by interface: " + stats.getNumPacketsDroppedByIf());
-
-                // Cleanup when complete
-                dumper.close();
-                handle.close();
-            }
+        // Tell the handle to loop using the listener we created
+        try {
+            int maxPackets = 20000;
+            handle.loop(maxPackets, listener);
+        } catch (InterruptedException | PcapNativeException | NotOpenException e) {
+            e.printStackTrace();
         }
+
+        audioUtil.convertPcapToRtpFile();
+
+        // Print out handle statistics
+        PcapStat stats = handle.getStats();
+        System.out.println("Packets received: " + stats.getNumPacketsReceived());
+        System.out.println("Packets dropped: " + stats.getNumPacketsDropped());
+        System.out.println("Packets dropped by interface: " + stats.getNumPacketsDroppedByIf());
+
+        // Cleanup when complete
+        dumper.close();
+        handle.close();
     }
 
     public PcapNetworkInterface getNetworkDevice() {
